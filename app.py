@@ -1,117 +1,95 @@
 import streamlit as st
 from openai import OpenAI
 
-# 1. Configuration esthétique de la page web
-st.set_page_config(
-    page_title="Projet Hérodote",
-    page_icon="🏛️",
-    layout="centered"
-)
+# Configuration de la page
+st.set_page_config(page_title="Projet Hérodote", page_icon="🏛️", layout="centered")
 
-# Design de l'en-tête thématique
+# En-tête personnalisé (Correction apportée ici)
 st.markdown("""
     <div style="text-align: center; padding: 10px; border-bottom: 2px solid #b58d3d; margin-bottom: 20px;">
-        <h1 style="color: #b58d3d; font-family: 'Georgia', serif; margin-bottom: 5px;">🏛️ Projet Hérodote</h1>
-        <h3 style="color: #3e3e3e; font-style: italic; font-weight: normal; margin-top: 0;">Le Conseil Antique : L'analyse croisée Ivre / Sobre</h3>
+        <h1 style="color: #b58d3d; margin-bottom: 0;">🏛️ Projet Hérodote</h1>
+        <p style="font-style: italic; color: #666;">Le Conseil Perse : L'analyse croisée Ivre / Sobre</p>
     </div>
-""", unsafe_style=True)
+""", unsafe_allow_html=True)
 
-st.write(
-    "Soumettez une problématique. Le conseiller **Ivre** va explorer des pistes de réflexion "
-    "sans aucun filtre social, puis le conseiller **Sobre** viendra y appliquer une logique "
-    "froide et rationnelle pour en extraire des plans d'action applicables."
-)
-
-# 2. Configuration dans la barre latérale
-st.sidebar.markdown("### ⚙️ Paramètres du Conseil")
+st.write("Soumettez une problématique. Réglez le niveau d'altération du conseiller Ivre, puis observez le filtre du conseiller Sobre.")
 
 # Récupération de la clé Groq cachée dans les Secrets
 api_key = st.secrets.get("GROQ_API_KEY", "")
 
-# Nouvelle fonctionnalité : Curseur d'absurdité (Température)
-options_absurdite = {
-    "🍷 Un verre (Créatif mais sage)": 0.8,
-    "🍶 Quelques calices (Idées osées)": 1.1,
-    "🍾 Grand Banquet (Franchement éméché)": 1.4,
-    "🥴 Délire d'Hérodote (Absurdité totale)": 1.7,
-    "🌀 Extase mystique (Chaos créatif)": 1.99
+# Nouvelle Option : Curseur de réglage de l'absurdité / créativité
+st.sidebar.header("Réglages du Conseil")
+niveau_ivresse = st.sidebar.select_slider(
+    "Niveau d'altération du Conseiller Ivre :",
+    options=["Sobre (0.2)", "Légère ivresse (0.7)", "Esprit joyeux (1.1)", "Complètement ivre (1.5)", "Extase mystique (2.0)"],
+    value="Complètement ivre (1.5)"
+)
+
+# Correspondance entre le texte du curseur et la valeur numérique de la Température du LLM
+dictionnaire_temperature = {
+    "Sobre (0.2)": 0.2,
+    "Légère ivresse (0.7)": 0.7,
+    "Esprit joyeux (1.1)": 1.1,
+    "Complètement ivre (1.5)": 1.5,
+    "Extase mystique (2.0)": 1.95  # 2.0 est parfois instable sur certains LLM, 1.95 assure la folie sans planter
 }
+temperature_ivre = dictionnaire_temperature[niveau_ivresse]
 
-choix_absurdite = st.sidebar.select_slider(
-    "Niveau d'absurdité du conseiller Ivre :",
-    options=list(options_absurdite.keys()),
-    value="🍾 Grand Banquet (Franchement éméché)"
-)
+# Zone d'écriture de la problématique
+problematique = st.text_area("Quelle problématique voulez-vous soumettre au Conseil ?", 
+                             value="Comment relancer le commerce de centre-ville face aux géants du e-commerce ?")
 
-# Conversion du choix en valeur numérique de température
-temperature_drunk = options_absurdite[choix_absurdite]
-
-st.sidebar.markdown("---")
-st.sidebar.caption("Propulsé par Groq & Llama 3.1 8B ⚡")
-
-# 3. Zone de saisie principale
-problematique = st.text_area(
-    "Quelle problématique voulez-vous soumettre aux deux états de conscience ?", 
-    value="Comment relancer le commerce de centre-ville face aux géants du e-commerce ?"
-)
-
-if st.button("🔥 Déclencher le Conseil Antique"):
+if st.button("Déclencher la délibération"):
     if not api_key:
         st.error("Erreur : La clé API GROQ_API_KEY n'est pas configurée dans les Secrets de Streamlit.")
     elif not problematique:
-        st.error("Veuillez formuler une problématique.")
+        st.error("Veuillez écrire une problématique.")
     else:
-        # Spinner d'attente immersif
         with st.spinner("Le vin coule, les esprits s'échauffent... Délibération en cours..."):
             try:
-                # Connexion à l'API Groq (compatible format OpenAI)
+                # Connexion à Groq
                 client = OpenAI(
                     base_url="https://api.groq.com/openai/v1",
                     api_key=api_key
                 )
                 
-                # Modèle stable et rapide de Groq
+                # Modèle stable et ultra-rapide sur Groq
                 modele_groq = "llama-3.1-8b-instant"
                 
-                # ÉTAPE 1 : LE CONSEILLER IVRE (Température ajustable)
+                # ÉTAPE 1 : CONSEILLER IVRE (Température dynamique réglée par l'utilisateur)
                 prompt_creative = (
-                    f"Tu es le conseiller 'Ivre' de l'Antiquité. Ton esprit est totalement "
-                    f"désinhibé par le vin. Propose 3 idées extrêmement audacieuses, étranges, "
-                    f"parfois absurdes, disruptives et sans aucun filtre pour résoudre : '{problematique}'."
+                    f"Tu es le conseiller 'Ivre'. Ton niveau d'ébriété est calé sur la valeur {temperature_ivre}. "
+                    f"Propose 3 idées ultra-créatives, spontanées, libres de tout filtre et potentiellement "
+                    f"complètement folles ou disruptives pour résoudre : '{problematique}'."
                 )
                 
                 reponse_creative = client.chat.completions.create(
-                    model=modele_groq,
-                    messages=[{"role": "user", "content": prompt_creative}],
-                    temperature=temperature_drunk  # On applique la température choisie !
+                    model=modele_groq, 
+                    messages=[{"role": "user", "content": prompt_creative}], 
+                    temperature=temperature_ivre
                 )
                 idees_brutes = reponse_creative.choices[0].message.content
                 
-                # Affichage des idées folles
-                st.markdown("### 🍷 [1] Les propositions du Conseiller 'Ivre'")
+                st.markdown(f"### 🍷 [1] Propositions du Conseiller Ivre ({niveau_ivresse})")
                 st.info(idees_brutes)
                 
-                # ÉTAPE 2 : LE CONSEILLER SOBRE (Température ultra-basse et logique)
+                # ÉTAPE 2 : CONSEILLER SOBRE (Température bloquée très basse pour la rigueur)
                 prompt_analytique = (
-                    f"Tu es le conseiller 'Sobre' de l'Antiquité. Ton esprit est d'une logique "
-                    f"froide, implacable et pragmatique. Voici des propositions formulées sous emprise "
-                    f"de l'alcool pour résoudre : '{problematique}'.\n\n"
-                    f"Idées proposées :\n{idees_brutes}\n\n"
-                    f"Évalue rigoureusement ces pistes de manière pragmatique. Élimine ce qui est irréaliste, "
-                    f"et ne retiens et ne reformule que ce qui survit à ton examen logique sous la forme "
-                    f"d'un plan concret et applicable."
+                    f"Tu es le conseiller 'Sobre'. Évalue froidement et logiquement les propositions "
+                    f"suivantes formulées pour résoudre '{problematique}'. Écarte ce qui est techniquement "
+                    f"impossible, mais garde l'étincelle d'originalité s'il y en a une. "
+                    f"Synthétise une décision finale réaliste et applicable :\n\n{idees_brutes}"
                 )
                 
                 reponse_analytique = client.chat.completions.create(
-                    model=modele_groq,
-                    messages=[{"role": "user", "content": prompt_analytique}],
-                    temperature=0.15  # Gardé très bas pour une logique pure
+                    model=modele_groq, 
+                    messages=[{"role": "user", "content": prompt_analytique}], 
+                    temperature=0.1
                 )
                 decision_finale = reponse_analytique.choices[0].message.content
                 
-                # Affichage de la synthèse logique
-                st.markdown("### ⚖️ [2] La décision finale du Conseiller 'Sobre'")
+                st.markdown("### ⚖️ [2] Décision finale du Conseiller Sobre")
                 st.success(decision_finale)
                 
             except Exception as e:
-                st.error(f"Erreur technique de l'API : {e}")
+                st.error(f"Erreur technique : {e}")
