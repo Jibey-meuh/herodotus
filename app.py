@@ -28,7 +28,7 @@ if st.button("Déclencher le Conseil"):
                     api_key=api_key
                 )
                 
-                modele_gratuit = "huggingfaceh4/zephyr-7b-beta:free"
+                modele_gratuit = "google/gemini-flash-1.5-8b:free"
                 
                 # ÉTAPE 1 : IVRE
                 prompt_creative = f"Tu es le conseiller 'Ivre'. Propose 3 idées ultra-créatives, audacieuses et sans aucun filtre pour résoudre : '{problematique}'."
