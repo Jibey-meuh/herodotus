@@ -28,7 +28,7 @@ if st.button("Déclencher le Conseil"):
                     api_key=api_key
                 )
                 
-                modele_gratuit = "microsoft/phi-3-medium-128k-instruct:free"
+                modele_gratuit = "huggingfaceh4/zephyr-7b-beta:free"
                 
                 # ÉTAPE 1 : IVRE
                 prompt_creative = f"Tu es le conseiller 'Ivre'. Propose 3 idées ultra-créatives, audacieuses et sans aucun filtre pour résoudre : '{problematique}'."
