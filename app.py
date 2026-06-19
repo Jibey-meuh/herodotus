@@ -28,7 +28,7 @@ if st.button("Déclencher le Conseil"):
                 )
                 
                 # Modèle ultra-rapide et gratuit de Groq
-                modele_groq = "llama3-8b-8192"
+                modele_groq = "llama-3.1-8b-instant"
                 
                 # ÉTAPE 1 : IVRE
                 prompt_creative = f"Tu es le conseiller 'Ivre'. Propose 3 idées ultra-créatives, audacieuses et sans aucun filtre pour résoudre : '{problematique}'."
